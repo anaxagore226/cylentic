@@ -1,0 +1,13 @@
+export { authService } from "./auth.service";
+export { establishmentService } from "./establishment.service";
+export { userService } from "./user.service";
+export { examService } from "./exam.service";
+export { participationService } from "./participation.service";
+export { gradingService } from "./grading.service";
+export { sandboxService } from "./sandbox.service";
+export { securityService } from "./security.service";
+export { notificationService } from "./notification.service";
+export { exportService } from "./export.service";
+export { billingService } from "./billing.service";
+export { superAdminService } from "./super-admin.service";
+export { onboardingService } from "./onboarding.service";
