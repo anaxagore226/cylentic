@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { hashPassword } from "@/lib/auth/password";
 
 async function main() {
   const plans = [
@@ -52,6 +53,20 @@ async function main() {
   }
 
   console.log("✓ Plans tarifaires initialisés");
+
+  const superPassword = process.env.SUPER_ADMIN_PASSWORD ?? "Cylentic2026!";
+  await prisma.platformAdmin.upsert({
+    where: { identifier: "SADM-0001" },
+    update: {},
+    create: {
+      identifier: "SADM-0001",
+      email: "superadmin@cylentic.local",
+      firstName: "Super",
+      lastName: "Admin",
+      passwordHash: await hashPassword(superPassword),
+    },
+  });
+  console.log("✓ Super Admin initialisé (SADM-0001)");
 }
 
 main()

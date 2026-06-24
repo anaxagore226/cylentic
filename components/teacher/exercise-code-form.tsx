@@ -30,6 +30,7 @@ export function ExerciseCodeForm({ examId }: { examId: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          type: "code",
           title: form.title,
           statement: form.statement,
           language: "python",

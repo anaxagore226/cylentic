@@ -9,6 +9,19 @@ import { z } from "zod";
 const schema = z.object({
   participationId: z.string().uuid(),
   reason: z.enum(["manual", "timer", "excluded"]).default("manual"),
+  qcmAnswers: z
+    .array(
+      z.object({
+        exerciseId: z.string().uuid(),
+        answers: z.array(
+          z.object({
+            questionId: z.string().uuid(),
+            choiceIds: z.array(z.string().uuid()),
+          }),
+        ),
+      }),
+    )
+    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -26,6 +39,7 @@ export async function POST(request: Request) {
       parsed.data.participationId,
       session.sub,
       parsed.data.reason,
+      parsed.data.qcmAnswers,
     );
 
     return jsonOk({ submitted: true });

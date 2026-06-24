@@ -25,14 +25,16 @@ export const participationService = {
       include: {
         exercises: {
           orderBy: { orderIndex: "asc" },
-          select: {
-            id: true,
-            type: true,
-            title: true,
-            statement: true,
-            language: true,
-            points: true,
-            orderIndex: true,
+          include: {
+            qcmQuestions: {
+              orderBy: { orderIndex: "asc" },
+              include: {
+                choices: {
+                  select: { id: true, text: true, orderIndex: true },
+                  orderBy: { orderIndex: "asc" },
+                },
+              },
+            },
           },
         },
       },
@@ -260,6 +262,10 @@ export const participationService = {
     participationId: string,
     studentId: string,
     reason: SubmissionReason = "manual",
+    qcmAnswers?: {
+      exerciseId: string;
+      answers: { questionId: string; choiceIds: string[] }[];
+    }[],
   ) {
     const participation = await prisma.examParticipation.findFirst({
       where: { id: participationId, studentId },
@@ -279,30 +285,69 @@ export const participationService = {
     const now = new Date();
 
     for (const exercise of participation.exam.exercises) {
-      if (exercise.type !== "code") continue;
-      const autosave = participation.autosaves.find(
-        (a) => a.exerciseId === exercise.id,
-      );
+      if (exercise.type === "code") {
+        const autosave = participation.autosaves.find(
+          (a) => a.exerciseId === exercise.id,
+        );
 
-      await prisma.submission.upsert({
-        where: {
-          participationId_exerciseId: {
+        await prisma.submission.upsert({
+          where: {
+            participationId_exerciseId: {
+              participationId,
+              exerciseId: exercise.id,
+            },
+          },
+          create: {
             participationId,
             exerciseId: exercise.id,
+            sourceCode: autosave?.content ?? "",
+            language: exercise.language ?? "python",
+            submittedAt: now,
           },
-        },
-        create: {
-          participationId,
-          exerciseId: exercise.id,
-          sourceCode: autosave?.content ?? "",
-          language: exercise.language ?? "python",
-          submittedAt: now,
-        },
-        update: {
-          sourceCode: autosave?.content ?? "",
-          submittedAt: now,
-        },
-      });
+          update: {
+            sourceCode: autosave?.content ?? "",
+            submittedAt: now,
+          },
+        });
+      }
+
+      if (exercise.type === "qcm") {
+        const exerciseAnswers = qcmAnswers?.find(
+          (a) => a.exerciseId === exercise.id,
+        );
+
+        const submission = await prisma.submission.upsert({
+          where: {
+            participationId_exerciseId: {
+              participationId,
+              exerciseId: exercise.id,
+            },
+          },
+          create: {
+            participationId,
+            exerciseId: exercise.id,
+            submittedAt: now,
+          },
+          update: { submittedAt: now },
+        });
+
+        if (exerciseAnswers?.answers.length) {
+          await prisma.qcmAnswer.deleteMany({
+            where: { submissionId: submission.id },
+          });
+          for (const ans of exerciseAnswers.answers) {
+            for (const choiceId of ans.choiceIds) {
+              await prisma.qcmAnswer.create({
+                data: {
+                  submissionId: submission.id,
+                  questionId: ans.questionId,
+                  choiceId,
+                },
+              });
+            }
+          }
+        }
+      }
     }
 
     const updated = await prisma.examParticipation.update({

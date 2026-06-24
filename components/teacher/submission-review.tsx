@@ -24,6 +24,7 @@ interface SubmissionData {
     stderr: string | null;
     status: string | null;
   }[];
+  qcmAnswers?: { question: string; choice: string }[];
 }
 
 interface DetailData {
@@ -108,19 +109,32 @@ export function SubmissionReview({
             Score auto : {sub.autoScore?.toFixed(2) ?? "—"} / {sub.maxPoints} pts
           </p>
 
-          <div className="mt-4 min-h-[200px] overflow-hidden rounded-xl border border-card-border">
-            <Monaco
-              height="200px"
-              language="python"
-              theme="vs-dark"
-              value={sub.sourceCode ?? ""}
-              options={{
-                readOnly: true,
-                minimap: { enabled: false },
-                fontSize: 13,
-              }}
-            />
-          </div>
+          {sub.sourceCode ? (
+            <div className="mt-4 min-h-[200px] overflow-hidden rounded-xl border border-card-border">
+              <Monaco
+                height="200px"
+                language="python"
+                theme="vs-dark"
+                value={sub.sourceCode}
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                }}
+              />
+            </div>
+          ) : null}
+
+          {sub.qcmAnswers && sub.qcmAnswers.length > 0 ? (
+            <ul className="mt-4 space-y-2 text-sm">
+              {sub.qcmAnswers.map((a, i) => (
+                <li key={i} className="rounded-lg border border-card-border px-3 py-2">
+                  <span className="text-muted">{a.question}</span>
+                  <p className="font-medium">{a.choice}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {sub.testResults.length > 0 ? (
             <div className="mt-4 space-y-2">

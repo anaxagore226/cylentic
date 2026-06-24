@@ -1,8 +1,17 @@
-export default function Page() {
+import { redirect } from "next/navigation";
+import { requireSuperAdmin } from "@/lib/super-admin/context";
+import { PlanEditor } from "@/components/super-admin/plan-editor";
+
+export default async function SuperAdminPlansPage() {
+  if (!(await requireSuperAdmin())) redirect("/login");
+
   return (
-    <main className="p-8">
+    <div>
       <h1 className="text-2xl font-semibold">Plans tarifaires</h1>
-      <p className="mt-2 text-muted-foreground">Phase 1 post-MVP.</p>
-    </main>
+      <p className="mt-1 text-sm text-muted">Catalogue Freemium de la plateforme.</p>
+      <div className="mt-6">
+        <PlanEditor />
+      </div>
+    </div>
   );
 }

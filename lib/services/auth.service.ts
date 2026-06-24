@@ -66,6 +66,52 @@ export const authService = {
 
     await checkLoginRateLimit(identifier, ip);
 
+    if (role === "super_admin") {
+      const platformAdmin = await prisma.platformAdmin.findUnique({
+        where: { identifier },
+      });
+
+      if (!platformAdmin || !platformAdmin.isActive) {
+        await logLoginAttempt(identifier, false, undefined, ip);
+        throw new AuthError("Identifiant ou mot de passe incorrect", "INVALID_CREDENTIALS");
+      }
+
+      const valid = await verifyPassword(input.password, platformAdmin.passwordHash);
+      if (!valid) {
+        await logLoginAttempt(identifier, false, undefined, ip);
+        throw new AuthError("Identifiant ou mot de passe incorrect", "INVALID_CREDENTIALS");
+      }
+
+      await logLoginAttempt(identifier, true, undefined, ip);
+      await prisma.platformAdmin.update({
+        where: { id: platformAdmin.id },
+        data: { lastLoginAt: new Date() },
+      });
+
+      const token = await signToken({
+        sub: platformAdmin.id,
+        identifier: platformAdmin.identifier,
+        role: "super_admin",
+        establishmentId: "",
+        mustChangePassword: false,
+      });
+
+      return {
+        token,
+        user: {
+          id: platformAdmin.id,
+          identifier: platformAdmin.identifier,
+          role: "super_admin" as const,
+          establishmentId: "",
+          mustChangePassword: false,
+          firstName: platformAdmin.firstName,
+          lastName: platformAdmin.lastName,
+          email: platformAdmin.email,
+        },
+        redirectTo: "/super-admin/dashboard",
+      };
+    }
+
     const user = await prisma.user.findUnique({
       where: { identifier },
     });

@@ -11,6 +11,7 @@ import {
   PublishExamButton,
 } from "@/components/teacher/access-code-display";
 import { ExerciseCodeForm } from "@/components/teacher/exercise-code-form";
+import { ExerciseQcmForm } from "@/components/teacher/exercise-qcm-form";
 
 const TEACHER_NAV = [
   { href: "/teacher/dashboard", label: "Tableau de bord" },
@@ -117,8 +118,9 @@ export default async function ExamDetailPage({
             Exercices ({exam.exercises.length})
           </h2>
           {exam.status === "draft" ? (
-            <div className="mt-4">
+            <div className="mt-4 space-y-6">
               <ExerciseCodeForm examId={exam.id} />
+              <ExerciseQcmForm examId={exam.id} />
             </div>
           ) : null}
           {exam.exercises.length === 0 ? (

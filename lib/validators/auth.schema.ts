@@ -12,7 +12,7 @@ export const loginSchema = z
     if (!role) {
       ctx.addIssue({
         code: "custom",
-        message: "Format d'identifiant invalide (ETU-, PROF-, ADM-)",
+        message: "Format d'identifiant invalide (ETU-, PROF-, ADM-, SADM-)",
         path: ["identifier"],
       });
     }

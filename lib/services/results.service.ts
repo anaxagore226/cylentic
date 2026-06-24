@@ -179,6 +179,9 @@ export const resultsService = {
             testResults: {
               include: { unitTest: true },
             },
+            qcmAnswers: {
+              include: { question: true, choice: true },
+            },
           },
         },
       },
@@ -237,6 +240,10 @@ export const resultsService = {
           stderr: tr.stderr,
           status: tr.status,
           timeMs: tr.timeMs,
+        })),
+        qcmAnswers: s.qcmAnswers.map((a) => ({
+          question: a.question.text,
+          choice: a.choice.text,
         })),
       })),
     };

@@ -1,8 +1,19 @@
-export default function Page() {
+import { redirect } from "next/navigation";
+import { requireSuperAdmin } from "@/lib/super-admin/context";
+import { Card } from "@/components/ui/card";
+
+export default async function SuperAdminFeedbacksPage() {
+  if (!(await requireSuperAdmin())) redirect("/login");
+
   return (
-    <main className="p-8">
+    <div>
       <h1 className="text-2xl font-semibold">Feedbacks</h1>
-      <p className="mt-2 text-muted-foreground">Phase 1 post-MVP.</p>
-    </main>
+      <Card className="mt-6">
+        <p className="text-sm text-muted">
+          Module de collecte des retours utilisateurs — à connecter à une
+          table dédiée en phase ultérieure.
+        </p>
+      </Card>
+    </div>
   );
 }

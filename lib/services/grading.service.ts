@@ -6,7 +6,7 @@ function normalizeOutput(output: string): string {
 }
 
 export const gradingService = {
-  async gradeSubmission(submissionId: string) {
+  async gradeCodeSubmission(submissionId: string) {
     const submission = await prisma.submission.findUnique({
       where: { id: submissionId },
       include: {
@@ -25,9 +25,10 @@ export const gradingService = {
     const tests = submission.exercise.unitTests;
     if (tests.length === 0) return submission;
 
-    let passedCount = 0;
     let totalWeight = 0;
     let earnedWeight = 0;
+
+    await prisma.submissionTestResult.deleteMany({ where: { submissionId } });
 
     for (const test of tests) {
       totalWeight += Number(test.weight);
@@ -40,10 +41,7 @@ export const gradingService = {
       const expected = normalizeOutput(test.expectedOutput);
       const passed = result.exitCode === 0 && actual === expected;
 
-      if (passed) {
-        passedCount++;
-        earnedWeight += Number(test.weight);
-      }
+      if (passed) earnedWeight += Number(test.weight);
 
       await prisma.submissionTestResult.create({
         data: {
@@ -64,11 +62,76 @@ export const gradingService = {
 
     return prisma.submission.update({
       where: { id: submissionId },
-      data: {
-        autoScore,
-        finalScore: autoScore,
+      data: { autoScore, finalScore: autoScore },
+    });
+  },
+
+  async gradeQcmSubmission(submissionId: string) {
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        exercise: {
+          include: {
+            qcmQuestions: {
+              include: { choices: true },
+            },
+          },
+        },
+        qcmAnswers: true,
       },
     });
+
+    if (!submission || submission.exercise.type !== "qcm") return submission;
+
+    let earned = 0;
+    let totalPoints = 0;
+
+    for (const question of submission.exercise.qcmQuestions) {
+      totalPoints += Number(question.points);
+      const correctIds = new Set(
+        question.choices.filter((c) => c.isCorrect).map((c) => c.id),
+      );
+      const selectedIds = submission.qcmAnswers
+        .filter((a) => a.questionId === question.id)
+        .map((a) => a.choiceId);
+
+      let questionPassed = false;
+      if (question.answerType === "single") {
+        questionPassed =
+          selectedIds.length === 1 && correctIds.has(selectedIds[0]);
+      } else {
+        const selectedSet = new Set(selectedIds);
+        questionPassed =
+          selectedSet.size === correctIds.size &&
+          [...correctIds].every((id) => selectedSet.has(id));
+      }
+
+      if (questionPassed) earned += Number(question.points);
+    }
+
+    const maxPoints = Number(submission.exercise.points) || totalPoints;
+    const autoScore =
+      totalPoints > 0
+        ? Math.round((earned / totalPoints) * maxPoints * 100) / 100
+        : 0;
+
+    return prisma.submission.update({
+      where: { id: submissionId },
+      data: { autoScore, finalScore: autoScore },
+    });
+  },
+
+  async gradeSubmission(submissionId: string) {
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: { exercise: true },
+    });
+    if (!submission) return null;
+
+    if (submission.exercise.type === "qcm") {
+      return this.gradeQcmSubmission(submissionId);
+    }
+    return this.gradeCodeSubmission(submissionId);
   },
 
   async gradeParticipation(participationId: string) {
@@ -84,10 +147,7 @@ export const gradingService = {
 
     await prisma.examParticipation.update({
       where: { id: participationId },
-      data: {
-        autoScore: totalAuto,
-        finalScore: totalAuto,
-      },
+      data: { autoScore: totalAuto, finalScore: totalAuto },
     });
 
     return totalAuto;

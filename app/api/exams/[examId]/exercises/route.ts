@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { createCodeExerciseSchema } from "@/lib/validators/exercise.schema";
+import { createExerciseSchema } from "@/lib/validators/exercise.schema";
 import { jsonError, jsonOk } from "@/lib/utils/api-response";
 
 export async function GET(
@@ -15,7 +15,13 @@ export async function GET(
   const { examId } = await params;
   const exercises = await prisma.exercise.findMany({
     where: { examId, exam: { teacherId: session.sub } },
-    include: { unitTests: { orderBy: { orderIndex: "asc" } } },
+    include: {
+      unitTests: { orderBy: { orderIndex: "asc" } },
+      qcmQuestions: {
+        orderBy: { orderIndex: "asc" },
+        include: { choices: { orderBy: { orderIndex: "asc" } } },
+      },
+    },
     orderBy: { orderIndex: "asc" },
   });
 
@@ -39,36 +45,71 @@ export async function POST(
     if (!exam) return jsonError("Examen non modifiable", 400);
 
     const body = await request.json();
-    const parsed = createCodeExerciseSchema.safeParse(body);
+    const parsed = createExerciseSchema.safeParse(body);
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? "Données invalides", 400);
     }
 
     const count = await prisma.exercise.count({ where: { examId } });
+    const data = parsed.data;
+
+    if (data.type === "code") {
+      const exercise = await prisma.exercise.create({
+        data: {
+          examId,
+          type: "code",
+          title: data.title,
+          statement: data.statement,
+          language: data.language,
+          points: data.points,
+          correctionMode: data.correctionMode,
+          orderIndex: count,
+          unitTests: data.unitTests?.length
+            ? {
+                create: data.unitTests.map((t, i) => ({
+                  input: t.input,
+                  expectedOutput: t.expectedOutput,
+                  weight: t.weight,
+                  isHidden: t.isHidden,
+                  orderIndex: i,
+                })),
+              }
+            : undefined,
+        },
+        include: { unitTests: true },
+      });
+      return jsonOk(exercise, 201);
+    }
 
     const exercise = await prisma.exercise.create({
       data: {
         examId,
-        type: "code",
-        title: parsed.data.title,
-        statement: parsed.data.statement,
-        language: parsed.data.language,
-        points: parsed.data.points,
-        correctionMode: parsed.data.correctionMode,
+        type: "qcm",
+        title: data.title,
+        statement: data.statement,
+        points: data.points,
+        correctionMode: "auto",
         orderIndex: count,
-        unitTests: parsed.data.unitTests?.length
-          ? {
-              create: parsed.data.unitTests.map((t, i) => ({
-                input: t.input,
-                expectedOutput: t.expectedOutput,
-                weight: t.weight,
-                isHidden: t.isHidden,
-                orderIndex: i,
+        qcmQuestions: {
+          create: data.questions.map((q, qi) => ({
+            text: q.text,
+            answerType: q.answerType,
+            points: q.points,
+            explanation: q.explanation,
+            orderIndex: qi,
+            choices: {
+              create: q.choices.map((c, ci) => ({
+                text: c.text,
+                isCorrect: c.isCorrect,
+                orderIndex: ci,
               })),
-            }
-          : undefined,
+            },
+          })),
+        },
       },
-      include: { unitTests: true },
+      include: {
+        qcmQuestions: { include: { choices: true } },
+      },
     });
 
     return jsonOk(exercise, 201);

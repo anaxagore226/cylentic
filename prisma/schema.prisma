@@ -613,3 +613,20 @@ model Notification {
   @@index([recipientUserId, createdAt])
   @@map("notifications")
 }
+
+// ─── Super Admin (plateforme globale) ────────────────────────────────────────
+
+model PlatformAdmin {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  identifier         String    @unique
+  email              String    @unique
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  passwordHash       String    @map("password_hash")
+  isActive           Boolean   @default(true) @map("is_active")
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("platform_admins")
+}

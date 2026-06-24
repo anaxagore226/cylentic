@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken, SESSION_COOKIE } from "@/lib/auth/jwt";
 import type { UserRole } from "@/lib/auth/roles";
+import { getDashboardPath } from "@/lib/auth/roles";
 
 const PUBLIC_PATHS = ["/", "/login", "/register/establishment"];
 const AUTH_API_PUBLIC = ["/api/auth/login", "/api/auth/logout", "/api/establishments"];
@@ -9,15 +10,16 @@ const AUTH_API_PUBLIC = ["/api/auth/login", "/api/auth/logout", "/api/establishm
 function isPublic(pathname: string) {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (AUTH_API_PUBLIC.some((p) => pathname.startsWith(p))) return true;
-  if (pathname.startsWith("/api/v1")) return false;
   return false;
 }
 
 function requiredRole(pathname: string): UserRole | null {
+  if (pathname.startsWith("/super-admin") || pathname.startsWith("/api/super-admin")) {
+    return "super_admin";
+  }
   if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/teacher")) return "teacher";
   if (pathname.startsWith("/student")) return "student";
-  if (pathname.startsWith("/api/super-admin")) return "admin";
   return null;
 }
 
@@ -53,13 +55,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ success: false, error: "Accès refusé" }, { status: 403 });
     }
-    const home =
-      session.role === "admin"
-        ? "/admin/dashboard"
-        : session.role === "teacher"
-          ? "/teacher/dashboard"
-          : "/student/change-password";
-    return NextResponse.redirect(new URL(home, request.url));
+    return NextResponse.redirect(new URL(getDashboardPath(session.role), request.url));
   }
 
   return NextResponse.next();
