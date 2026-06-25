@@ -1,17 +1,9 @@
 -- =============================================================================
--- Cylentic — Schéma de base de données complet (PostgreSQL 15+)
+-- Cylentic — Schéma de base de données (référence PostgreSQL — obsolète)
 -- =============================================================================
--- Plateforme d'examens de programmation en navigateur sécurisé.
---
--- Ce script est idempotent autant que possible et couvre :
---   1. Création de la base et des extensions
---   2. Types énumérés
---   3. Fonction et triggers utilitaires (updated_at)
---   4. Tables (par domaine) avec contraintes et clés étrangères
---   5. Index
---   6. Données de référence (seed) : plans tarifaires
---
--- Voir db.md pour la documentation détaillée du modèle.
+-- ⚠️  Le SGBD cible est MySQL 8+. Utilisez Prisma pour créer le schéma :
+--     npm run db:push
+-- Ce fichier PostgreSQL est conservé à titre documentaire uniquement.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------

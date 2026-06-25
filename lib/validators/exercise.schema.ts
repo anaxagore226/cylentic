@@ -22,13 +22,31 @@ export const qcmChoiceSchema = z.object({
   isCorrect: z.boolean(),
 });
 
-export const qcmQuestionSchema = z.object({
-  text: z.string().min(1),
-  answerType: z.enum(["single", "multiple"]).default("single"),
-  points: z.coerce.number().min(0).default(1),
-  explanation: z.string().optional(),
-  choices: z.array(qcmChoiceSchema).min(2),
-});
+export const qcmQuestionSchema = z
+  .object({
+    text: z.string().min(1),
+    answerType: z.enum(["single", "multiple"]).default("single"),
+    points: z.coerce.number().min(0).default(1),
+    explanation: z.string().optional(),
+    choices: z.array(qcmChoiceSchema).min(2).max(8),
+  })
+  .superRefine((q, ctx) => {
+    const correctCount = q.choices.filter((c) => c.isCorrect).length;
+    if (correctCount === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Chaque question doit avoir au moins une bonne réponse",
+        path: ["choices"],
+      });
+    }
+    if (q.answerType === "single" && correctCount !== 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "En réponse unique, une seule proposition doit être correcte",
+        path: ["choices"],
+      });
+    }
+  });
 
 export const createQcmExerciseSchema = z.object({
   type: z.literal("qcm"),

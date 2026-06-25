@@ -10,7 +10,7 @@ export function Alert({
   className?: string;
 }) {
   const styles = {
-    info: "border-card-border bg-white/5 text-muted",
+    info: "border-card-border bg-surface-subtle text-muted",
     success: "border-accent/30 bg-accent/10 text-accent",
     warning: "border-amber-500/30 bg-amber-500/10 text-amber-300",
     error: "border-danger/30 bg-danger/10 text-danger",

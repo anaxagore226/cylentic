@@ -17,8 +17,12 @@ function requiredRole(pathname: string): UserRole | null {
   if (pathname.startsWith("/super-admin") || pathname.startsWith("/api/super-admin")) {
     return "super_admin";
   }
-  if (pathname.startsWith("/admin")) return "admin";
-  if (pathname.startsWith("/teacher")) return "teacher";
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/billing")) {
+    return "admin";
+  }
+  if (pathname.startsWith("/teacher") || pathname.startsWith("/api/exports")) {
+    return "teacher";
+  }
   if (pathname.startsWith("/student")) return "student";
   return null;
 }

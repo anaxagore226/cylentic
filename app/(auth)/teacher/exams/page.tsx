@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { examService } from "@/lib/services/exam.service";
+import { DeleteExamButton } from "@/components/teacher/delete-exam-button";
 
 const TEACHER_NAV = [
   { href: "/teacher/dashboard", label: "Tableau de bord" },
@@ -75,7 +76,15 @@ export default async function TeacherExamsPage() {
                     </p>
                   ) : null}
                 </div>
-                <Badge>{statusLabels[exam.status] ?? exam.status}</Badge>
+                <div className="flex items-center gap-3">
+                  <Badge>{statusLabels[exam.status] ?? exam.status}</Badge>
+                  <DeleteExamButton
+                    examId={exam.id}
+                    examName={exam.name}
+                    variant="ghost"
+                    size="sm"
+                  />
+                </div>
               </li>
             ))}
           </ul>

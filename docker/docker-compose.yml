@@ -1,15 +1,17 @@
 # Cylentic — Docker Compose (MVP)
-# services: app, postgres, redis, sandbox
+# services: app, mysql, redis, sandbox
 version: "3.9"
 services:
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8.4
     environment:
-      POSTGRES_DB: cylentic
-      POSTGRES_USER: cylentic
-      POSTGRES_PASSWORD: cylentic
+      MYSQL_DATABASE: cylentic
+      MYSQL_USER: cylentic
+      MYSQL_PASSWORD: cylentic
+      MYSQL_ROOT_PASSWORD: cylentic
     ports:
-      - "5432:5432"
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
   redis:
     image: redis:7-alpine
     ports:

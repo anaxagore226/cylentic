@@ -1,7 +1,7 @@
 # Cylentic — Architecture du projet
 
 > Plateforme d'examens de programmation sécurisés en navigateur.  
-> Stack : **Next.js 16** (App Router) · **Prisma** · **PostgreSQL** · **Redis** · **Docker** (sandbox Python)
+> Stack : **Next.js 16** (App Router) · **Prisma** · **MySQL** · **Redis** · **Docker** (sandbox Python)
 
 ---
 
@@ -166,7 +166,7 @@ cylentic/
 │   └── exam-status.worker.ts
 │
 ├── prisma/
-│   ├── schema.prisma                       # Modèle complet (PostgreSQL)
+│   ├── schema.prisma                       # Modèle complet (MySQL)
 │   ├── migrations/
 │   └── seed.ts
 │

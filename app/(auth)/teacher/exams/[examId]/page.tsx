@@ -12,6 +12,8 @@ import {
 } from "@/components/teacher/access-code-display";
 import { ExerciseCodeForm } from "@/components/teacher/exercise-code-form";
 import { ExerciseQcmForm } from "@/components/teacher/exercise-qcm-form";
+import { DeleteExamButton } from "@/components/teacher/delete-exam-button";
+import { ExportResultsButtons } from "@/components/teacher/export-buttons";
 
 const TEACHER_NAV = [
   { href: "/teacher/dashboard", label: "Tableau de bord" },
@@ -54,13 +56,16 @@ export default async function ExamDetailPage({
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Professeur — ${user.establishment.name}`}
     >
-      <div className="mb-6 flex flex-wrap gap-3">
-        <Badge>{exam.status}</Badge>
-        {exam.startAt ? (
-          <span className="text-sm text-muted">
-            Début : {exam.startAt.toLocaleString("fr-FR")}
-          </span>
-        ) : null}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge>{exam.status}</Badge>
+          {exam.startAt ? (
+            <span className="text-sm text-muted">
+              Début : {exam.startAt.toLocaleString("fr-FR")}
+            </span>
+          ) : null}
+        </div>
+        <DeleteExamButton examId={exam.id} examName={exam.name} />
       </div>
 
       {exam.accessCode ? (
@@ -76,6 +81,10 @@ export default async function ExamDetailPage({
             <Link href={`/teacher/exams/${exam.id}/results`}>
               <Button variant="secondary">Résultats</Button>
             </Link>
+          </div>
+          <div className="mt-4">
+            <p className="mb-2 text-sm text-muted">Exporter les résultats</p>
+            <ExportResultsButtons examId={exam.id} />
           </div>
         </div>
       ) : canPublish ? (

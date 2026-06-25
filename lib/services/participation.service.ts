@@ -100,6 +100,13 @@ export const participationService = {
       );
     }
 
+    if (existing?.status === "excluded") {
+      throw new ParticipationError(
+        "Vous avez été exclu de cet examen pour non-respect des consignes de sécurité",
+        "EXCLUDED",
+      );
+    }
+
     const participation = await prisma.examParticipation.upsert({
       where: { examId_studentId: { examId, studentId } },
       create: {
@@ -136,7 +143,21 @@ export const participationService = {
     }
 
     if (participation.isCompleted) {
-      return { exam, participation, phase: "submitted" as const };
+      return {
+        exam,
+        participation,
+        phase: "submitted" as const,
+        excluded: participation.status === "excluded",
+      };
+    }
+
+    if (participation.status === "excluded") {
+      return {
+        exam,
+        participation,
+        phase: "submitted" as const,
+        excluded: true,
+      };
     }
 
     const now = new Date();
@@ -165,8 +186,8 @@ export const participationService = {
       };
     }
 
-    const securityIncidents = participation.incidents.filter(
-      (i) => i.type === "fullscreen_exit" || i.type === "tab_switch",
+    const fullscreenExitCount = participation.incidents.filter(
+      (i) => i.type === "fullscreen_exit",
     ).length;
 
     return {
@@ -176,8 +197,9 @@ export const participationService = {
       serverTime: now.toISOString(),
       startAt: startAt.toISOString(),
       endAt: endAt.toISOString(),
-      incidentCount: securityIncidents,
-      maxIncidents: exam.maxIncidentsBeforeClose,
+      incidentCount: fullscreenExitCount,
+      fullscreenExitCount,
+      maxIncidents: 2,
     };
   },
 
@@ -242,20 +264,20 @@ export const participationService = {
       },
     });
 
-    const tabIncidents = participation.incidents.filter(
-      (i) => i.type === "fullscreen_exit" || i.type === "tab_switch",
-    ).length + (type === "fullscreen_exit" || type === "tab_switch" ? 1 : 0);
+    const fullscreenExits =
+      participation.incidents.filter((i) => i.type === "fullscreen_exit").length +
+      (type === "fullscreen_exit" ? 1 : 0);
 
-    if (tabIncidents >= participation.exam.maxIncidentsBeforeClose) {
-      await this.submitExam(
-        participationId,
-        studentId,
-        "excluded",
-      );
-      return { incident, excluded: true };
+    if (type === "fullscreen_exit" && fullscreenExits >= 2) {
+      await this.submitExam(participationId, studentId, "excluded");
+      return { incident, excluded: true, fullscreenExitCount: fullscreenExits };
     }
 
-    return { incident, excluded: false };
+    return {
+      incident,
+      excluded: false,
+      fullscreenExitCount: type === "fullscreen_exit" ? fullscreenExits : undefined,
+    };
   },
 
   async submitExam(

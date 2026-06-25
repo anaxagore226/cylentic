@@ -4,6 +4,7 @@ import {
   getNextSequence,
 } from "@/lib/utils/identifier";
 import { hashPassword, DEFAULT_PASSWORD } from "@/lib/auth/password";
+import { billingService } from "@/lib/services/billing.service";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/app/generated/prisma/client";
 import type {
@@ -85,6 +86,8 @@ export const userService = {
       throw new UserError("Email déjà utilisé", "EMAIL_EXISTS");
     }
 
+    await billingService.assertCanAddStudent(establishmentId);
+
     const year = new Date().getFullYear();
     const seq = await getNextSequence(establishmentId, "student", acronym, year);
     const identifier = generateStudentId(acronym, year, seq);
@@ -144,6 +147,8 @@ export const userService = {
     if (emailTaken) {
       throw new UserError("Email déjà utilisé", "EMAIL_EXISTS");
     }
+
+    await billingService.assertCanAddTeacher(establishmentId);
 
     const seq = await getNextSequence(establishmentId, "teacher", acronym);
     const identifier = generateTeacherId(acronym, seq);

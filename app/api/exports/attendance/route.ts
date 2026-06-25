@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth/session";
-import { exportService } from "@/lib/services/export.service";
+import { exportService, ExportError } from "@/lib/services/export.service";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -15,13 +15,16 @@ export async function GET(request: Request) {
     }
 
     const csv = await exportService.generateAttendanceCsv(examId, session.sub);
-    return new NextResponse(csv, {
+    return new NextResponse("\uFEFF" + csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="presence-${examId}.csv"`,
       },
     });
   } catch (err) {
+    if (err instanceof ExportError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+    }
     console.error("[export attendance]", err);
     return NextResponse.json({ success: false, error: "Erreur serveur" }, { status: 500 });
   }

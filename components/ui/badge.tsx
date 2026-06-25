@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils/cn";
 type BadgeVariant = "default" | "success" | "warning" | "danger";
 
 const variants: Record<BadgeVariant, string> = {
-  default: "bg-white/5 text-muted border-card-border",
+  default: "bg-surface-subtle text-muted border-card-border",
   success: "bg-accent/10 text-accent border-accent/20",
   warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   danger: "bg-danger/10 text-danger border-danger/20",

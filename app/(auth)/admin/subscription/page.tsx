@@ -1,8 +1,18 @@
-export default function Page() {
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { SubscriptionPanel } from "@/components/admin/subscription-panel";
+import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
+
+export default async function AdminSubscriptionPage() {
+  const { user } = await requireAdmin();
+
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold">Abonnement et plan tarifaire</h1>
-      <p className="mt-2 text-muted-foreground">À implémenter.</p>
-    </main>
+    <DashboardShell
+      nav={ADMIN_NAV}
+      title="Abonnement et plan tarifaire"
+      userName={`${user.firstName} ${user.lastName}`}
+      roleLabel={`Admin — ${user.establishment.name}`}
+    >
+      <SubscriptionPanel />
+    </DashboardShell>
   );
 }

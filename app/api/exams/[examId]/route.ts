@@ -1,10 +1,26 @@
-import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth/session";
+import { examService, ExamError } from "@/lib/services/exam.service";
+import { jsonError, jsonOk } from "@/lib/utils/api-response";
 
-/** GET/PATCH/DELETE examen — squelette API */
-export async function GET() {
-  return NextResponse.json({ message: "À implémenter" }, { status: 501 });
-}
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ examId: string }> },
+) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "teacher") {
+      return jsonError("Accès refusé", 403);
+    }
 
-export async function POST() {
-  return NextResponse.json({ message: "À implémenter" }, { status: 501 });
+    const { examId } = await params;
+    await examService.delete(examId, session.sub);
+
+    return jsonOk({ deleted: true });
+  } catch (err) {
+    if (err instanceof ExamError) {
+      return jsonError(err.message, err.code === "NOT_FOUND" ? 404 : 400);
+    }
+    console.error("[exams DELETE]", err);
+    return jsonError("Erreur serveur", 500);
+  }
 }

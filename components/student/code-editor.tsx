@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useTheme } from "@/components/theme/theme-provider";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -29,6 +30,7 @@ export function CodeEditor({
   error,
 }: CodeEditorProps) {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const { theme } = useTheme();
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -56,7 +58,7 @@ export function CodeEditor({
         <Monaco
           height="100%"
           language={language}
-          theme="vs-dark"
+          theme={theme === "dark" ? "vs-dark" : "vs"}
           value={value}
           onChange={(v) => onChange(v ?? "")}
           options={{

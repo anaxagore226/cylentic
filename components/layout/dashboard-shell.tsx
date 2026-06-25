@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils/cn";
 
 interface NavItem {
@@ -34,7 +35,7 @@ export function DashboardShell({
               key={item.href}
               href={item.href}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-white/5 hover:text-foreground",
+                "rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-subtle hover:text-foreground",
               )}
             >
               {item.label}
@@ -44,7 +45,7 @@ export function DashboardShell({
         <form action="/api/auth/logout" method="POST" className="mt-auto">
           <button
             type="submit"
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-white/5 hover:text-foreground"
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-surface-subtle hover:text-foreground"
           >
             Déconnexion
           </button>
@@ -57,6 +58,7 @@ export function DashboardShell({
             <h1 className="text-lg font-semibold">{title}</h1>
             <p className="text-sm text-muted">{userName}</p>
           </div>
+          <ThemeToggle />
         </header>
         <main className="flex-1 p-6">{children}</main>
       </div>

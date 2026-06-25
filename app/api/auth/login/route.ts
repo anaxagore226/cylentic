@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       const status =
         err.code === "RATE_LIMITED"
           ? 429
-          : err.code === "ALREADY_SUBMITTED"
+          : err.code === "ALREADY_SUBMITTED" || err.code === "EXCLUDED"
             ? 403
             : 401;
       return jsonError(err.message, status);

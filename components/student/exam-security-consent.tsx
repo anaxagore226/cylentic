@@ -61,7 +61,10 @@ export function ExamSecurityConsent({ examId }: { examId: string }) {
         <li>• Fermez tous les autres onglets avant de continuer.</li>
         <li>• Le plein écran est obligatoire pendant l&apos;examen.</li>
         <li>• Toute sortie du plein écran sera enregistrée comme incident.</li>
-        <li>• Après 2 incidents, l&apos;examen sera fermé automatiquement.</li>
+        <li>
+          • À la 1<sup>re</sup> sortie : avertissement et obligation de repasser en
+          plein écran. À la 2<sup>e</sup> : exclusion définitive.
+        </li>
       </ul>
 
       {!supported ? (

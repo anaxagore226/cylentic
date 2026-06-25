@@ -4,8 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
+
+const MIN_CHOICES = 2;
+const MAX_CHOICES = 8;
+const DEFAULT_CHOICE_COUNT = 4;
+
+const CHOICE_COUNT_OPTIONS = Array.from(
+  { length: MAX_CHOICES - MIN_CHOICES + 1 },
+  (_, i) => {
+    const value = String(i + MIN_CHOICES);
+    return { value, label: `${value} propositions` };
+  },
+);
 
 interface Choice {
   text: string;
@@ -17,18 +30,40 @@ interface Question {
   answerType: "single" | "multiple";
   points: string;
   explanation: string;
+  choiceCount: number;
   choices: Choice[];
 }
 
-const emptyQuestion = (): Question => ({
+function createChoices(count: number, answerType: "single" | "multiple"): Choice[] {
+  return Array.from({ length: count }, (_, i) => ({
+    text: "",
+    isCorrect: answerType === "single" ? i === 0 : false,
+  }));
+}
+
+function resizeChoices(
+  choices: Choice[],
+  count: number,
+  answerType: "single" | "multiple",
+): Choice[] {
+  const next = choices.slice(0, count);
+  while (next.length < count) {
+    next.push({ text: "", isCorrect: false });
+  }
+  if (answerType === "single") {
+    const correctIdx = next.findIndex((c) => c.isCorrect);
+    return next.map((c, i) => ({ ...c, isCorrect: i === (correctIdx >= 0 ? correctIdx : 0) }));
+  }
+  return next;
+}
+
+const emptyQuestion = (choiceCount = DEFAULT_CHOICE_COUNT): Question => ({
   text: "",
   answerType: "single",
   points: "1",
   explanation: "",
-  choices: [
-    { text: "", isCorrect: true },
-    { text: "", isCorrect: false },
-  ],
+  choiceCount,
+  choices: createChoices(choiceCount, "single"),
 });
 
 export function ExerciseQcmForm({ examId }: { examId: string }) {
@@ -36,13 +71,35 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
   const [title, setTitle] = useState("");
   const [statement, setStatement] = useState("");
   const [points, setPoints] = useState("10");
-  const [questions, setQuestions] = useState<Question[]>([emptyQuestion()]);
+  const [questions, setQuestions] = useState<Question[]>([
+    emptyQuestion(DEFAULT_CHOICE_COUNT),
+  ]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function updateQuestion(idx: number, patch: Partial<Question>) {
     setQuestions((prev) =>
-      prev.map((q, i) => (i === idx ? { ...q, ...patch } : q)),
+      prev.map((q, i) => {
+        if (i !== idx) return q;
+        const next = { ...q, ...patch };
+        if (patch.answerType && patch.answerType !== q.answerType) {
+          next.choices = resizeChoices(q.choices, q.choiceCount, patch.answerType);
+        }
+        return next;
+      }),
+    );
+  }
+
+  function setChoiceCount(qIdx: number, count: number) {
+    setQuestions((prev) =>
+      prev.map((q, i) => {
+        if (i !== qIdx) return q;
+        return {
+          ...q,
+          choiceCount: count,
+          choices: resizeChoices(q.choices, count, q.answerType),
+        };
+      }),
     );
   }
 
@@ -92,7 +149,7 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
       router.refresh();
       setTitle("");
       setStatement("");
-      setQuestions([emptyQuestion()]);
+      setQuestions([emptyQuestion(DEFAULT_CHOICE_COUNT)]);
     } catch {
       setError("Erreur lors de l'ajout.");
     } finally {
@@ -109,7 +166,7 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
         <Input label="Points totaux" type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
 
         {questions.map((q, qi) => (
-          <div key={qi} className="rounded-xl border border-card-border p-4 space-y-3">
+          <div key={qi} className="space-y-3 rounded-xl border border-card-border p-4">
             <p className="text-sm font-medium">Question {qi + 1}</p>
             <Input
               label="Intitulé"
@@ -117,7 +174,22 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
               onChange={(e) => updateQuestion(qi, { text: e.target.value })}
               required
             />
-            <div className="flex gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select
+                label="Nombre de propositions"
+                value={String(q.choiceCount)}
+                onChange={(e) => setChoiceCount(qi, Number(e.target.value))}
+                options={CHOICE_COUNT_OPTIONS}
+              />
+              <Input
+                label="Points"
+                type="number"
+                min={0}
+                value={q.points}
+                onChange={(e) => updateQuestion(qi, { points: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
@@ -135,6 +207,9 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
                 Réponses multiples
               </label>
             </div>
+            <p className="text-xs text-muted">
+              Cochez la ou les bonnes réponses parmi les {q.choiceCount} propositions.
+            </p>
             {q.choices.map((c, ci) => (
               <div key={ci} className="flex items-center gap-2">
                 <input
@@ -164,20 +239,35 @@ export function ExerciseQcmForm({ examId }: { examId: string }) {
                 <Input
                   value={c.text}
                   onChange={(e) => updateChoice(qi, ci, { text: e.target.value })}
-                  placeholder={`Choix ${ci + 1}`}
+                  placeholder={`Proposition ${ci + 1}`}
                   className="flex-1"
+                  required
                 />
               </div>
             ))}
             <Input
-              label="Explication (post-MVP visible prof)"
+              label="Explication (optionnel)"
               value={q.explanation}
               onChange={(e) => updateQuestion(qi, { explanation: e.target.value })}
             />
+            {questions.length > 1 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setQuestions((prev) => prev.filter((_, i) => i !== qi))}
+              >
+                Retirer cette question
+              </Button>
+            ) : null}
           </div>
         ))}
 
-        <Button type="button" variant="secondary" onClick={() => setQuestions((p) => [...p, emptyQuestion()])}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setQuestions((p) => [...p, emptyQuestion(DEFAULT_CHOICE_COUNT)])}
+        >
           + Question
         </Button>
 

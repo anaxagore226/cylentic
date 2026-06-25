@@ -65,7 +65,7 @@ export function LoginForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <Input
           label="Identifiant"
-          placeholder="ETU-UANO-2025-0042"
+          placeholder="ADM-DEMO-0001"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           required

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/components/theme/theme-provider";
 import { IncidentTimeline } from "@/components/teacher/incident-timeline";
 import { ManualScoreForm } from "@/components/teacher/manual-score-form";
 
@@ -60,6 +61,8 @@ export function SubmissionReview({
   participationId: string;
   data: DetailData;
 }) {
+  const { theme } = useTheme();
+
   return (
     <div className="space-y-6">
       <Card>
@@ -114,7 +117,7 @@ export function SubmissionReview({
               <Monaco
                 height="200px"
                 language="python"
-                theme="vs-dark"
+                theme={theme === "dark" ? "vs-dark" : "vs"}
                 value={sub.sourceCode}
                 options={{
                   readOnly: true,

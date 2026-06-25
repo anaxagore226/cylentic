@@ -138,6 +138,7 @@ export const resultsService = {
       },
       participations: participations.map((p) => ({
         id: p.id,
+        studentId: p.student.id,
         student: {
           identifier: p.student.identifier,
           name: `${p.student.firstName} ${p.student.lastName}`,
@@ -153,7 +154,57 @@ export const resultsService = {
         finalScore: p.finalScore != null ? Number(p.finalScore) : null,
         incidentCount: p.incidents.length,
         exerciseCount: p.submissions.length,
+        submissions: p.submissions.map((s) => ({
+          exerciseTitle: s.exercise.title,
+          autoScore: s.autoScore != null ? Number(s.autoScore) : null,
+          manualScore: s.manualScore != null ? Number(s.manualScore) : null,
+          finalScore: s.finalScore != null ? Number(s.finalScore) : null,
+          maxPoints: Number(s.exercise.points),
+        })),
       })),
+    };
+  },
+
+  async getExportData(examId: string, teacherId: string) {
+    const live = await this.getLiveStatus(examId, teacherId);
+    const results = await this.getResults(examId, teacherId);
+
+    const byParticipationId = new Map(
+      results.participations.map((p) => [p.id, p]),
+    );
+
+    const rows = live.rows.map((row) => {
+      const detail = row.participationId
+        ? byParticipationId.get(row.participationId)
+        : undefined;
+      return {
+        participationId: row.participationId,
+        studentId: row.studentId,
+        identifier: row.identifier,
+        name: row.name,
+        className: row.className,
+        status: row.status,
+        statusLabel: row.statusLabel,
+        connectedAt: row.connectedAt,
+        submittedAt: row.submittedAt,
+        incidentCount: row.incidentCount,
+        autoScore: detail?.autoScore ?? null,
+        manualScore: detail?.manualScore ?? null,
+        finalScore: detail?.finalScore ?? null,
+        exerciseCount: detail?.exerciseCount ?? 0,
+        submissions: detail?.submissions ?? [],
+      };
+    });
+
+    if (rows.length === 0) {
+      throw new ResultsError("Aucun étudiant dans les classes de cet examen", "EMPTY");
+    }
+
+    return {
+      exam: live.exam,
+      summary: live.summary,
+      rows,
+      participations: results.participations,
     };
   },
 

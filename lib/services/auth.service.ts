@@ -153,6 +153,13 @@ export const authService = {
         },
       });
 
+      if (participation?.status === "excluded") {
+        throw new AuthError(
+          "Vous avez été exclu de cet examen pour non-respect des consignes de sécurité.",
+          "EXCLUDED",
+        );
+      }
+
       if (participation?.isCompleted) {
         throw new AuthError(
           "Vous avez déjà soumis cet examen. Votre copie a bien été enregistrée.",

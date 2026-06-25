@@ -18,22 +18,22 @@ export async function GET(request: Request) {
     }
 
     if (format === "xlsx") {
-      const buffer = await exportService.generateExcel(examId, session.sub);
+      const { buffer, filename } = await exportService.generateExcel(examId, session.sub);
       return new NextResponse(new Uint8Array(buffer), {
         headers: {
           "Content-Type":
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "Content-Disposition": `attachment; filename="resultats-${examId}.xlsx"`,
+          "Content-Disposition": `attachment; filename="${filename}"`,
         },
       });
     }
 
     if (format === "pdf") {
-      const buffer = await exportService.generatePdf(examId, session.sub);
+      const { buffer, filename } = await exportService.generatePdf(examId, session.sub);
       return new NextResponse(new Uint8Array(buffer), {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="resultats-${examId}.pdf"`,
+          "Content-Disposition": `attachment; filename="${filename}"`,
         },
       });
     }

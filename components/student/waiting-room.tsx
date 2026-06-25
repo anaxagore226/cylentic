@@ -25,7 +25,12 @@ export function WaitingRoom({ examId }: { examId: string }) {
         setExamName(exam.name);
 
         if (phase === "submitted") {
-          router.replace("/student/exam/submitted");
+          const excluded = json.data.excluded;
+          router.replace(
+            excluded
+              ? "/student/exam/submitted?reason=excluded"
+              : "/student/exam/submitted",
+          );
           return;
         }
 

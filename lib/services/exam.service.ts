@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generateExamAccessCode } from "@/lib/utils/exam-code";
+import { billingService } from "@/lib/services/billing.service";
 import type { CreateExamInput } from "@/lib/validators/exam.schema";
 
 export class ExamError extends Error {
@@ -13,6 +14,8 @@ export class ExamError extends Error {
 
 export const examService = {
   async create(teacherId: string, establishmentId: string, input: CreateExamInput) {
+    await billingService.assertCanCreateExam(establishmentId);
+
     const classes = await prisma.class.findMany({
       where: {
         id: { in: input.classIds },
@@ -78,6 +81,22 @@ export const examService = {
     return prisma.exam.findMany({
       where: { teacherId },
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async delete(examId: string, teacherId: string) {
+    const exam = await prisma.exam.findFirst({
+      where: { id: examId, teacherId },
+    });
+
+    if (!exam) {
+      throw new ExamError("Examen introuvable", "NOT_FOUND");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.examParticipation.deleteMany({ where: { examId } });
+      await tx.examCodeAttempt.deleteMany({ where: { examId } });
+      await tx.exam.delete({ where: { id: examId } });
     });
   },
 };

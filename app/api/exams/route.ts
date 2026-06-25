@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { createExamSchema } from "@/lib/validators/exam.schema";
 import { examService, ExamError } from "@/lib/services/exam.service";
+import { BillingError } from "@/lib/services/billing.service";
 import { jsonError, jsonOk } from "@/lib/utils/api-response";
 
 export async function GET() {
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     return jsonOk(exam, 201);
   } catch (err) {
     if (err instanceof ExamError) return jsonError(err.message, 400);
+    if (err instanceof BillingError) return jsonError(err.message, 409);
     console.error("[exams POST]", err);
     return jsonError("Erreur serveur", 500);
   }

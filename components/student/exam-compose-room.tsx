@@ -6,12 +6,16 @@ import { CodeEditor } from "@/components/student/code-editor";
 import { QcmExercisePanel } from "@/components/student/qcm-exercise-panel";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useExamTimer } from "@/hooks/use-exam-timer";
 import { useAutosave } from "@/hooks/use-autosave";
 import { useFullscreen } from "@/hooks/security/use-fullscreen";
 import { useTabVisibility } from "@/hooks/security/use-tab-visibility";
 import { useClipboardGuard } from "@/hooks/security/use-clipboard-guard";
 import { useKeyboardLock } from "@/hooks/security/use-keyboard-lock";
+import { FullscreenLockOverlay } from "@/components/student/fullscreen-lock-overlay";
+
+const FULLSCREEN_MAX_EXITS = 2;
 
 interface QcmQuestion {
   id: string;
@@ -43,8 +47,9 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
   const [runError, setRunError] = useState("");
   const [running, setRunning] = useState(false);
   const [warning, setWarning] = useState("");
-  const [incidentCount, setIncidentCount] = useState(0);
-  const [maxIncidents, setMaxIncidents] = useState(2);
+  const [fullscreenExitCount, setFullscreenExitCount] = useState(0);
+  const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
+  const [enteringFullscreen, setEnteringFullscreen] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
 
   const submitExam = useCallback(
@@ -77,28 +82,77 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
 
   const { label: timerLabel } = useExamTimer(endAt, () => submitExam("timer"));
 
+  const handleFullscreenExit = useCallback(async () => {
+    if (!participationId) return;
+
+    const res = await fetch("/api/exam-session/incidents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        participationId,
+        type: "fullscreen_exit",
+      }),
+    });
+    const json = await res.json();
+
+    if (!json.success) {
+      setWarning(json.error ?? "Impossible d'enregistrer l'incident.");
+      return;
+    }
+
+    if (json.data?.excluded) {
+      router.replace("/student/exam/submitted?reason=excluded");
+      return;
+    }
+
+    const count = json.data?.fullscreenExitCount ?? 1;
+    setFullscreenExitCount(count);
+    setFullscreenBlocked(true);
+    setWarning(
+      `Sortie du plein écran enregistrée (${count}/${FULLSCREEN_MAX_EXITS}). Repassez en plein écran pour continuer.`,
+    );
+  }, [participationId, router]);
+
+  const { isFullscreen, enter, supported } = useFullscreen(handleFullscreenExit);
+
   const reportIncident = useCallback(
     async (type: string, payload?: string) => {
-      if (!participationId) return;
+      if (!participationId || fullscreenBlocked) return;
       const res = await fetch("/api/exam-session/incidents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ participationId, type, payload }),
       });
       const json = await res.json();
-      if (json.success?.excluded) {
-        router.replace("/student/exam/submitted");
-      } else {
-        setIncidentCount((c) => c + 1);
+      if (json.data?.excluded) {
+        router.replace("/student/exam/submitted?reason=excluded");
+        return;
+      }
+      if (type === "tab_switch") {
         setWarning(
-          `Incident enregistré (${incidentCount + 1}/${maxIncidents}). Ne quittez pas l'examen.`,
+          "Changement d'onglet détecté et enregistré. Restez sur cette fenêtre.",
         );
       }
     },
-    [participationId, incidentCount, maxIncidents, router],
+    [participationId, fullscreenBlocked, router],
   );
 
-  useFullscreen(() => reportIncident("fullscreen_exit"));
+  useEffect(() => {
+    if (isFullscreen) {
+      setFullscreenBlocked(false);
+    }
+  }, [isFullscreen]);
+
+  async function handleEnterFullscreen() {
+    setEnteringFullscreen(true);
+    const ok = await enter();
+    setEnteringFullscreen(false);
+    if (!ok) {
+      setWarning(
+        "Impossible d'activer le plein écran. Autorisez-le dans votre navigateur.",
+      );
+    }
+  }
   useTabVisibility(() => reportIncident("tab_switch"));
   useClipboardGuard((text) => reportIncident("clipboard_paste", text));
   useKeyboardLock();
@@ -114,12 +168,16 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
         participation,
         phase,
         endAt: end,
-        incidentCount: ic,
-        maxIncidents: mx,
+        fullscreenExitCount: fc,
+        excluded,
       } = json.data;
 
-      if (phase === "submitted") {
-        router.replace("/student/exam/submitted");
+      if (phase === "submitted" || excluded) {
+        router.replace(
+          excluded
+            ? "/student/exam/submitted?reason=excluded"
+            : "/student/exam/submitted",
+        );
         return;
       }
       if (phase === "waiting") {
@@ -130,8 +188,16 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
       setExamName(exam.name);
       setExercises(exam.exercises);
       setEndAt(end);
-      setIncidentCount(ic ?? 0);
-      setMaxIncidents(mx ?? 2);
+      setFullscreenExitCount(fc ?? 0);
+
+      if (fc && fc >= FULLSCREEN_MAX_EXITS) {
+        router.replace("/student/exam/submitted?reason=excluded");
+        return;
+      }
+
+      if (fc && fc > 0) {
+        setFullscreenBlocked(true);
+      }
 
       if (participation) {
         setParticipationId(participation.id);
@@ -149,9 +215,11 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
         setCodes(initial);
         setActiveId(exam.exercises[0]?.id ?? "");
       }
+
+      await enter();
     }
     load();
-  }, [examId, router]);
+  }, [examId, router, enter]);
 
   const activeExercise = exercises.find((e) => e.id === activeId);
   const activeCode = codes[activeId] ?? "";
@@ -164,6 +232,7 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
   );
 
   async function handleRun() {
+    if (fullscreenBlocked) return;
     setRunning(true);
     setOutput("");
     setRunError("");
@@ -188,13 +257,23 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="relative flex h-screen flex-col bg-background">
+      {fullscreenBlocked ? (
+        <FullscreenLockOverlay
+          exitCount={fullscreenExitCount}
+          maxExits={FULLSCREEN_MAX_EXITS}
+          onEnterFullscreen={handleEnterFullscreen}
+          entering={enteringFullscreen}
+        />
+      ) : null}
+
       <header className="flex items-center justify-between border-b border-card-border px-4 py-3">
         <div>
           <h1 className="font-semibold">{examName}</h1>
           <p className="text-xs text-muted">Ne quittez pas cette fenêtre</p>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {!confirmSubmit ? (
             <Button size="sm" onClick={() => setConfirmSubmit(true)}>
               Soumettre l&apos;examen
@@ -219,7 +298,9 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
         </Alert>
       ) : null}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div
+        className={`flex flex-1 overflow-hidden ${fullscreenBlocked ? "pointer-events-none select-none opacity-40" : ""}`}
+      >
         <aside className="w-80 shrink-0 overflow-y-auto border-r border-card-border p-4">
           <nav className="space-y-1">
             {exercises.map((ex) => (
@@ -230,7 +311,7 @@ export function ExamComposeRoom({ examId }: { examId: string }) {
                 className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                   activeId === ex.id
                     ? "bg-accent/10 text-accent"
-                    : "text-muted hover:bg-white/5"
+                    : "text-muted hover:bg-surface-subtle"
                 }`}
               >
                 {ex.title}

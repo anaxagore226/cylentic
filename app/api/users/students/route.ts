@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { createStudentSchema } from "@/lib/validators/user.schema";
 import { userService, UserError } from "@/lib/services/user.service";
+import { BillingError } from "@/lib/services/billing.service";
 import { jsonError, jsonOk } from "@/lib/utils/api-response";
 
 export async function GET() {
@@ -52,6 +53,9 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof UserError) {
       return jsonError(err.message, err.code === "EMAIL_EXISTS" ? 409 : 400);
+    }
+    if (err instanceof BillingError) {
+      return jsonError(err.message, 409);
     }
     console.error("[students POST]", err);
     return jsonError("Erreur serveur", 500);

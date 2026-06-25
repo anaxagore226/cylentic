@@ -1,7 +1,7 @@
 # Cylentic — Modèle de base de données
 
-> SGBD cible : **PostgreSQL 15+**
-> Le DDL complet et exécutable se trouve dans [`db.sql`](./db.sql).
+> SGBD cible : **MySQL 8+**
+> Le schéma exécutable est maintenu via **Prisma** ([`prisma/schema.prisma`](./prisma/schema.prisma)) ; `db.sql` est une référence historique.
 > Ce document décrit les tables, attributs, relations, cardinalités et choix de conception.
 
 ---
@@ -24,14 +24,14 @@
 
 | Convention | Choix |
 |------------|-------|
-| Clés primaires | `UUID` (`gen_random_uuid()`) — opaques, non devinables, compatibles distribution |
+| Clés primaires | `UUID` (`CHAR(36)`, généré côté app via Prisma `uuid()`) — opaques, non devinables |
 | Nommage | `snake_case`, tables au **pluriel**, colonnes au singulier |
-| Horodatage | `created_at` / `updated_at` en `TIMESTAMPTZ` (UTC), maintenus par trigger |
-| Dates d'examen | `TIMESTAMPTZ` + `timezone` de l'établissement (heure réelle de démarrage) |
+| Horodatage | `created_at` / `updated_at` en `DATETIME(3)` (UTC), `updated_at` géré par Prisma |
+| Dates d'examen | `DATETIME(3)` + `timezone` de l'établissement (heure réelle de démarrage) |
 | Suppression | **Pas de suppression physique** des comptes : `is_active`/archivage (données historiques conservées) |
 | Multi-tenant | `establishment_id` sur chaque entité métier |
-| Argent | `NUMERIC` (jamais `float`) ; scores en `NUMERIC(6,2)` |
-| Données semi-structurées | `JSONB` (rapports d'import, métadonnées d'incidents, audit) |
+| Argent | `DECIMAL` (jamais `float`) ; scores en `DECIMAL(6,2)` |
+| Données semi-structurées | `JSON` (rapports d'import, métadonnées d'incidents, audit) |
 | Rôle utilisateur | Déduit du **format de l'identifiant**, matérialisé dans `users.role` |
 
 ---

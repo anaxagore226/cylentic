@@ -13,6 +13,7 @@ import {
   establishmentTypes,
   subscriptionPlans,
 } from "@/lib/validators/establishment.schema";
+import { PLAN_DETAILS } from "@/lib/constants/plans";
 
 const TIMEZONES = [
   { value: "Africa/Ouagadougou", label: "Africa/Ouagadougou (GMT)" },
@@ -242,7 +243,9 @@ export function EstablishmentRegisterForm() {
             Plan tarifaire
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {subscriptionPlans.map((plan) => (
+            {subscriptionPlans.map((plan) => {
+              const details = PLAN_DETAILS[plan.value];
+              return (
               <label
                 key={plan.value}
                 className={`cursor-pointer rounded-xl border p-4 transition-colors ${
@@ -259,9 +262,16 @@ export function EstablishmentRegisterForm() {
                   onChange={() => update("planCode", plan.value)}
                   className="sr-only"
                 />
-                <span className="font-medium">{plan.label}</span>
+                <span className="font-medium">{details.label}</span>
+                <p className="mt-1 text-xs text-muted">{details.description}</p>
+                <ul className="mt-2 space-y-0.5 text-xs text-muted">
+                  {details.highlights.map((h) => (
+                    <li key={h}>· {h}</li>
+                  ))}
+                </ul>
               </label>
-            ))}
+            );
+            })}
           </div>
         </section>
 

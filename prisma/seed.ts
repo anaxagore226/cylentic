@@ -44,7 +44,14 @@ async function main() {
   for (const plan of plans) {
     await prisma.subscriptionPlan.upsert({
       where: { code: plan.code },
-      update: {},
+      update: {
+        name: plan.name,
+        maxTeachers: plan.maxTeachers,
+        maxStudents: plan.maxStudents,
+        maxExamsPerMonth: plan.maxExamsPerMonth,
+        priceMin: plan.priceMin,
+        priceMax: plan.priceMax,
+      },
       create: {
         ...plan,
         features: {},
@@ -57,7 +64,10 @@ async function main() {
   const superPassword = process.env.SUPER_ADMIN_PASSWORD ?? "Cylentic2026!";
   await prisma.platformAdmin.upsert({
     where: { identifier: "SADM-0001" },
-    update: {},
+    update: {
+      passwordHash: await hashPassword(superPassword),
+      isActive: true,
+    },
     create: {
       identifier: "SADM-0001",
       email: "superadmin@cylentic.local",
