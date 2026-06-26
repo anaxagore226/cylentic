@@ -1,40 +1,31 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/shared/logo";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { LandingHeader } from "@/components/landing/landing-header";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingFeatures } from "@/components/landing/landing-features";
 import { LandingCapabilities } from "@/components/landing/landing-capabilities";
+import { LandingTestimonials } from "@/components/landing/landing-testimonials";
+import { LandingTeam } from "@/components/landing/landing-team";
+import { LandingPricing } from "@/components/landing/landing-pricing";
+import { LandingContact } from "@/components/landing/landing-contact";
+import { LandingFaq } from "@/components/landing/landing-faq";
+import { LandingFooter } from "@/components/landing/landing-footer";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-card-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Logo />
-          <nav className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Connexion
-              </Button>
-            </Link>
-            <Link href="/register/establishment">
-              <Button size="sm">Créer un établissement</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main>
         <LandingHero />
         <LandingFeatures />
         <LandingCapabilities />
+        <LandingTestimonials />
+        <LandingTeam />
+        <LandingPricing />
+        <LandingFaq />
+        <LandingContact />
       </main>
 
-      <footer className="border-t border-card-border py-8 text-center text-sm text-muted">
-        © {new Date().getFullYear()} Cylentic — Plateforme d&apos;examens sécurisés
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

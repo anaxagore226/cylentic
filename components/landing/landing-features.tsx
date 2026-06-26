@@ -45,7 +45,7 @@ const features = [
 
 export function LandingFeatures() {
   return (
-    <section className="relative border-t border-card-border bg-background py-20">
+    <section id="features" className="relative border-t border-card-border bg-background py-20">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 overflow-hidden"

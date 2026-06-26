@@ -18,7 +18,13 @@ interface YearOption {
   label: string;
 }
 
-export function StudentForm() {
+export function StudentForm({
+  onSuccess,
+  embedded,
+}: {
+  onSuccess?: () => void;
+  embedded?: boolean;
+}) {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [years, setYears] = useState<YearOption[]>([]);
@@ -87,6 +93,7 @@ export function StudentForm() {
         classId: classes[0]?.id ?? "",
         academicYearId: form.academicYearId,
       });
+      onSuccess?.();
       router.refresh();
     } catch {
       setError("Erreur lors de la création.");
@@ -95,10 +102,8 @@ export function StudentForm() {
     }
   }
 
-  return (
-    <Card>
-      <h3 className="font-semibold">Ajouter un étudiant</h3>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Prénom"
@@ -143,10 +148,25 @@ export function StudentForm() {
         </div>
         {error ? <Alert variant="error">{error}</Alert> : null}
         {success ? <Alert variant="success">{success}</Alert> : null}
-        <Button type="submit" loading={loading} disabled={!form.classId}>
-          Créer le compte étudiant
-        </Button>
-      </form>
+      <Button type="submit" loading={loading} disabled={!form.classId}>
+        Créer le compte étudiant
+      </Button>
+    </form>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        <h3 className="font-semibold">Ajouter un étudiant</h3>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <h3 className="font-semibold">Ajouter un étudiant</h3>
+      {formContent}
     </Card>
   );
 }

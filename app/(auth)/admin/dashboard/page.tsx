@@ -1,16 +1,26 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { billingService } from "@/lib/services/billing.service";
+import { onboardingService } from "@/lib/services/onboarding.service";
 import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
 
 export default async function AdminDashboardPage() {
   const { user } = await requireAdmin();
 
   const establishmentId = user.establishmentId;
+
+  const onboarding = await onboardingService
+    .getStatus(establishmentId)
+    .catch(() => null);
+
+  if (onboarding && !onboarding.isComplete) {
+    redirect("/admin/onboarding");
+  }
 
   const [studentCount, teacherCount, examCount, incidentCount, billing] =
     await Promise.all([

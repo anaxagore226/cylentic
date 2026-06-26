@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 
-export function AcademicYearForm() {
+export function AcademicYearForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
   const [label, setLabel] = useState("");
   const [error, setError] = useState("");
@@ -29,6 +29,7 @@ export function AcademicYearForm() {
         return;
       }
       setLabel("");
+      onSuccess?.();
       router.refresh();
     } catch {
       setError("Erreur lors de la création.");

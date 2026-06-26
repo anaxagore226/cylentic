@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 
-export function TeacherForm() {
+export function TeacherForm({
+  onSuccess,
+  embedded,
+}: {
+  onSuccess?: () => void;
+  embedded?: boolean;
+}) {
   const router = useRouter();
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -58,6 +64,7 @@ export function TeacherForm() {
         subjects: "",
         function: "",
       });
+      onSuccess?.();
       router.refresh();
     } catch {
       setError("Erreur lors de la création.");
@@ -66,10 +73,8 @@ export function TeacherForm() {
     }
   }
 
-  return (
-    <Card>
-      <h3 className="font-semibold">Ajouter un professeur</h3>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Prénom"
@@ -105,10 +110,25 @@ export function TeacherForm() {
         </div>
         {error ? <Alert variant="error">{error}</Alert> : null}
         {success ? <Alert variant="success">{success}</Alert> : null}
-        <Button type="submit" loading={loading}>
-          Créer le compte professeur
-        </Button>
-      </form>
+      <Button type="submit" loading={loading}>
+        Créer le compte professeur
+      </Button>
+    </form>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        <h3 className="font-semibold">Ajouter un professeur</h3>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <h3 className="font-semibold">Ajouter un professeur</h3>
+      {formContent}
     </Card>
   );
 }

@@ -48,7 +48,7 @@ const capabilities = [
 
 export function LandingCapabilities() {
   return (
-    <section className="relative border-t border-card-border py-20">
+    <section id="capabilities" className="relative border-t border-card-border py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="relative mx-auto max-w-2xl text-center">
           <div className="relative z-10 hero-fade-in hero-delay-1">

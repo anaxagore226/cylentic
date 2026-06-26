@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 
-export function ClassForm() {
+export function ClassForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [track, setTrack] = useState("");
@@ -37,6 +37,7 @@ export function ClassForm() {
       setName("");
       setTrack("");
       setLevel("");
+      onSuccess?.();
       router.refresh();
     } catch {
       setError("Erreur lors de la création.");

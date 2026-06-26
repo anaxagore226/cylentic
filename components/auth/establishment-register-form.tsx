@@ -117,6 +117,10 @@ export function EstablishmentRegisterForm() {
           Votre identifiant administrateur :{" "}
           <strong className="text-foreground">{success.identifier}</strong>
         </p>
+        <p className="mt-3 text-sm text-muted">
+          À la connexion, un assistant vous guidera pour configurer votre année
+          académique, vos classes et vos premiers utilisateurs.
+        </p>
         <Button className="mt-6 w-full" onClick={() => router.push("/login")}>
           Se connecter
         </Button>

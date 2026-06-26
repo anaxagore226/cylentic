@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/password";
 import { inferRoleFromIdentifier } from "@/lib/auth/roles";
 import { signToken } from "@/lib/auth/jwt";
+import { onboardingService } from "@/lib/services/onboarding.service";
 import type { LoginInput } from "@/lib/validators/auth.schema";
 import type { SessionUser } from "@/lib/types/auth";
 
@@ -245,7 +246,13 @@ export const authService = {
             ? "/teacher/dashboard"
             : "/student/change-password";
     } else if (user.role === "admin") {
-      redirectTo = "/admin/dashboard";
+      const onboarding = await onboardingService
+        .getStatus(user.establishmentId)
+        .catch(() => null);
+      redirectTo =
+        onboarding && !onboarding.isComplete
+          ? "/admin/onboarding"
+          : "/admin/dashboard";
     } else if (user.role === "teacher") {
       redirectTo = "/teacher/dashboard";
     }
