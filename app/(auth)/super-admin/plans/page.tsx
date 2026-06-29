@@ -1,17 +1,26 @@
 import { redirect } from "next/navigation";
-import { requireSuperAdmin } from "@/lib/super-admin/context";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import {
+  requireSuperAdmin,
+  SUPER_ADMIN_NAV_GROUPS,
+} from "@/lib/super-admin/context";
 import { PlanEditor } from "@/components/super-admin/plan-editor";
 
 export default async function SuperAdminPlansPage() {
-  if (!(await requireSuperAdmin())) redirect("/login");
+  const ctx = await requireSuperAdmin();
+  if (!ctx) redirect("/login");
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Plans tarifaires</h1>
-      <p className="mt-1 text-sm text-muted">Catalogue Freemium de la plateforme.</p>
-      <div className="mt-6">
-        <PlanEditor />
-      </div>
-    </div>
+    <DashboardShell
+      nav={SUPER_ADMIN_NAV_GROUPS}
+      title="Plans tarifaires"
+      userName={`${ctx.admin.firstName} ${ctx.admin.lastName}`}
+      roleLabel="Super Administrateur — Cylentic"
+    >
+      <p className="mb-6 text-sm text-muted">
+        Catalogue Freemium de la plateforme.
+      </p>
+      <PlanEditor />
+    </DashboardShell>
   );
 }

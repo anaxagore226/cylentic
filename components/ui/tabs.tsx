@@ -90,14 +90,30 @@ export function TabsTrigger({
       data-state={isActive ? "active" : "inactive"}
       onClick={() => onValueChange(value)}
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-all",
+        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
         "text-muted hover:text-foreground",
-        "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+        "data-[state=active]:border data-[state=active]:border-accent/30 data-[state=active]:bg-accent/10 data-[state=active]:text-accent data-[state=active]:shadow-sm",
         className,
       )}
       {...props}
     >
       {children}
     </button>
+  );
+}
+
+export function TabsContent({
+  value,
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { value: string }) {
+  const { value: active } = useTabs();
+  if (active !== value) return null;
+
+  return (
+    <div role="tabpanel" className={cn("mt-6", className)} {...props}>
+      {children}
+    </div>
   );
 }

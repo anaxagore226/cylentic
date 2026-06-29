@@ -15,9 +15,4 @@ export async function requireSuperAdmin() {
   return { session, admin };
 }
 
-export const SUPER_ADMIN_NAV = [
-  { href: "/super-admin/dashboard", label: "Tableau de bord" },
-  { href: "/super-admin/establishments", label: "Établissements" },
-  { href: "/super-admin/plans", label: "Plans tarifaires" },
-  { href: "/super-admin/feedbacks", label: "Feedbacks" },
-];
+export { SUPER_ADMIN_NAV, SUPER_ADMIN_NAV_GROUPS } from "@/lib/super-admin/nav";

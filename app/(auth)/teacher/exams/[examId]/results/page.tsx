@@ -7,7 +7,7 @@ import { ResultsTable } from "@/components/teacher/results-table";
 import { Button } from "@/components/ui/button";
 import { resultsService } from "@/lib/services/results.service";
 import { ExportResultsButtons } from "@/components/teacher/export-buttons";
-import { TEACHER_NAV } from "@/lib/teacher/nav";
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 export default async function ResultsPage({
   params,
@@ -32,7 +32,7 @@ export default async function ResultsPage({
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title={`Résultats — ${data.exam.name}`}
       userName={`${user!.firstName} ${user!.lastName}`}
       roleLabel={`Professeur — ${user!.establishment.name}`}

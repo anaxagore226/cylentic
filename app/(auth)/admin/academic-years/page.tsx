@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AcademicYearForm } from "@/components/admin/academic-year-form";
 import { academicYearService } from "@/lib/services/class.service";
-import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
+import { ADMIN_NAV_GROUPS, requireAdmin } from "@/lib/admin/context";
 
 export default async function AdminAcademicYearsPage() {
   const { user } = await requireAdmin();
@@ -11,7 +11,7 @@ export default async function AdminAcademicYearsPage() {
 
   return (
     <DashboardShell
-      nav={ADMIN_NAV}
+      nav={ADMIN_NAV_GROUPS}
       title="Années académiques"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Admin — ${user.establishment.name}`}

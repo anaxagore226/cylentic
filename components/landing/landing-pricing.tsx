@@ -34,17 +34,20 @@ type PlanConfig = {
   };
 };
 
+function mergeFeatures(...groups: string[][]): string[] {
+  return [...new Set(groups.flat())];
+}
+
 const plans: PlanConfig[] = [
   {
     id: "free",
     name: PLAN_DETAILS.free.label,
     icon: Star,
     description: PLAN_DETAILS.free.description,
-    features: [
-      ...PLAN_DETAILS.free.highlights,
+    features: mergeFeatures(PLAN_DETAILS.free.highlights, [
       "IDE & anti-triche inclus",
       "Correction automatique",
-    ],
+    ]),
     cta: "Commencer gratuitement",
     href: "/register/establishment",
     price: { monthly: "free", yearly: "free" },
@@ -54,11 +57,10 @@ const plans: PlanConfig[] = [
     name: PLAN_DETAILS.starter.label,
     icon: Zap,
     description: PLAN_DETAILS.starter.description,
-    features: [
-      ...PLAN_DETAILS.starter.highlights,
+    features: mergeFeatures(PLAN_DETAILS.starter.highlights, [
       "Export PDF & Excel",
       "Journal d'incidents",
-    ],
+    ]),
     cta: "Choisir Starter",
     href: "/register/establishment",
     price: { monthly: 19000, yearly: 15200 },
@@ -68,11 +70,9 @@ const plans: PlanConfig[] = [
     name: PLAN_DETAILS.pro.label,
     icon: Shield,
     description: PLAN_DETAILS.pro.description,
-    features: [
-      ...PLAN_DETAILS.pro.highlights,
+    features: mergeFeatures(PLAN_DETAILS.pro.highlights, [
       "Surveillance en direct",
-      "Support prioritaire",
-    ],
+    ]),
     cta: "Choisir Pro",
     href: "/register/establishment",
     popular: true,
@@ -83,11 +83,10 @@ const plans: PlanConfig[] = [
     name: PLAN_DETAILS.enterprise.label,
     icon: Building2,
     description: PLAN_DETAILS.enterprise.description,
-    features: [
-      ...PLAN_DETAILS.enterprise.highlights,
+    features: mergeFeatures(PLAN_DETAILS.enterprise.highlights, [
       "SLA & formation sur site",
       "Hébergement dédié possible",
-    ],
+    ]),
     cta: "Nous contacter",
     href: "/register/establishment",
     price: { monthly: "custom", yearly: "custom" },
@@ -228,9 +227,9 @@ export function LandingPricing() {
                   </CardHeader>
 
                   <CardContent className="flex-1 space-y-3">
-                    {plan.features.map((feature) => (
+                    {plan.features.map((feature, featureIndex) => (
                       <div
-                        key={feature}
+                        key={`${plan.id}-${featureIndex}`}
                         className="flex items-start gap-2 text-sm"
                         style={{ color: "var(--muted)" }}
                       >

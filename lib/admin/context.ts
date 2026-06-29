@@ -2,16 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
-export const ADMIN_NAV = [
-  { href: "/admin/dashboard", label: "Tableau de bord" },
-  { href: "/admin/classes", label: "Classes" },
-  { href: "/admin/academic-years", label: "Années académiques" },
-  { href: "/admin/students", label: "Étudiants" },
-  { href: "/admin/teachers", label: "Professeurs" },
-  { href: "/admin/admins", label: "Administrateurs" },
-  { href: "/admin/activity-logs", label: "Journal d'activité" },
-  { href: "/admin/subscription", label: "Abonnement" },
-];
+export { ADMIN_NAV, ADMIN_NAV_GROUPS } from "@/lib/admin/nav";
 
 export async function requireAdmin() {
   const session = await getSession();

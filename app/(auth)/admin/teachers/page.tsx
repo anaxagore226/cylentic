@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeacherForm } from "@/components/admin/teacher-form";
 import { userService } from "@/lib/services/user.service";
-import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
+import { ADMIN_NAV_GROUPS, requireAdmin } from "@/lib/admin/context";
 
 export default async function AdminTeachersPage() {
   const { user } = await requireAdmin();
@@ -11,7 +11,7 @@ export default async function AdminTeachersPage() {
 
   return (
     <DashboardShell
-      nav={ADMIN_NAV}
+      nav={ADMIN_NAV_GROUPS}
       title="Professeurs"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Admin — ${user.establishment.name}`}

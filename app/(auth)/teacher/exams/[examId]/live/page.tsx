@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { LiveMonitor } from "@/components/teacher/live-monitor";
 import { Button } from "@/components/ui/button";
-import { TEACHER_NAV } from "@/lib/teacher/nav";
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 export default async function LivePage({
   params,
@@ -28,7 +28,7 @@ export default async function LivePage({
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title={`Suivi live — ${exam.name}`}
       userName={`${user!.firstName} ${user!.lastName}`}
       roleLabel={`Professeur — ${user!.establishment.name}`}

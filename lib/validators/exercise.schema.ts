@@ -61,5 +61,14 @@ export const createExerciseSchema = z.discriminatedUnion("type", [
   createQcmExerciseSchema,
 ]);
 
+export const updateCodeExerciseSchema = createCodeExerciseSchema.omit({
+  type: true,
+});
+export const updateQcmExerciseSchema = createQcmExerciseSchema.omit({
+  type: true,
+});
+
 export type CreateCodeExerciseInput = z.infer<typeof createCodeExerciseSchema>;
 export type CreateQcmExerciseInput = z.infer<typeof createQcmExerciseSchema>;
+export type UpdateCodeExerciseInput = z.infer<typeof updateCodeExerciseSchema>;
+export type UpdateQcmExerciseInput = z.infer<typeof updateQcmExerciseSchema>;

@@ -1,19 +1,26 @@
 import { redirect } from "next/navigation";
-import { requireSuperAdmin } from "@/lib/super-admin/context";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import {
+  requireSuperAdmin,
+  SUPER_ADMIN_NAV_GROUPS,
+} from "@/lib/super-admin/context";
 import { EstablishmentTable } from "@/components/super-admin/establishment-table";
 
 export default async function SuperAdminEstablishmentsPage() {
-  if (!(await requireSuperAdmin())) redirect("/login");
+  const ctx = await requireSuperAdmin();
+  if (!ctx) redirect("/login");
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Établissements</h1>
-      <p className="mt-1 text-sm text-muted">
-        Gestion globale — métadonnées uniquement.
+    <DashboardShell
+      nav={SUPER_ADMIN_NAV_GROUPS}
+      title="Établissements"
+      userName={`${ctx.admin.firstName} ${ctx.admin.lastName}`}
+      roleLabel="Super Administrateur — Cylentic"
+    >
+      <p className="mb-6 text-sm text-muted">
+        Gestion globale des établissements — métadonnées uniquement.
       </p>
-      <div className="mt-6">
-        <EstablishmentTable />
-      </div>
-    </div>
+      <EstablishmentTable />
+    </DashboardShell>
   );
 }

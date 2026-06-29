@@ -2,16 +2,38 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
 import { billingService } from "@/lib/services/billing.service";
 import { onboardingService } from "@/lib/services/onboarding.service";
-import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
+import { adminDashboardService } from "@/lib/services/admin-dashboard.service";
+import { ADMIN_NAV_GROUPS, requireAdmin } from "@/lib/admin/context";
+import {
+  ChartLegend,
+  CompletionGauge,
+  DashboardChartCard,
+  ExamStatusDonutChart,
+  ExamsByMonthChart,
+  ParticipationTrendChart,
+} from "@/components/teacher/dashboard/teacher-charts";
+import {
+  AdminActivityPanel,
+  AdminBillingPanel,
+  AdminDashboardKpis,
+  AdminLiveExamsPanel,
+  AdminQuickActions,
+  AdminRecentExamsTable,
+} from "@/components/admin/dashboard/admin-dashboard-panels";
+import { GraduationCap } from "lucide-react";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bonjour";
+  if (hour < 18) return "Bon après-midi";
+  return "Bonsoir";
+}
 
 export default async function AdminDashboardPage() {
   const { user } = await requireAdmin();
-
   const establishmentId = user.establishmentId;
 
   const onboarding = await onboardingService
@@ -22,109 +44,164 @@ export default async function AdminDashboardPage() {
     redirect("/admin/onboarding");
   }
 
-  const [studentCount, teacherCount, examCount, incidentCount, billing] =
-    await Promise.all([
-      prisma.user.count({
-        where: { establishmentId, role: "student", isActive: true },
-      }),
-      prisma.user.count({
-        where: { establishmentId, role: "teacher", isActive: true },
-      }),
-      prisma.exam.count({ where: { establishmentId } }),
-      prisma.incident.count({
-        where: {
-          participation: { exam: { establishmentId } },
-        },
-      }),
-      billingService.getOverview(establishmentId).catch(() => null),
-    ]);
-
-  const stats = [
-    { label: "Étudiants actifs", value: studentCount },
-    { label: "Professeurs actifs", value: teacherCount },
-    { label: "Examens créés", value: examCount },
-    { label: "Incidents détectés", value: incidentCount },
-  ];
+  const [stats, billing] = await Promise.all([
+    adminDashboardService.getStats(establishmentId),
+    billingService.getOverview(establishmentId).catch(() => null),
+  ]);
 
   return (
     <DashboardShell
-      nav={ADMIN_NAV}
+      nav={ADMIN_NAV_GROUPS}
       title="Tableau de bord"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Admin — ${user.establishment.name}`}
+      headerExtra={
+        <Link href="/admin/students" className="hidden sm:block">
+          <Button size="sm">
+            <GraduationCap className="h-4 w-4" />
+            Gérer les étudiants
+          </Button>
+        </Link>
+      }
     >
-      {billing?.subscription.isSimulated ? (
-        <div className="mb-6 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
-          Paiement en cours d&apos;intégration — plan{" "}
-          <strong>{billing.plan.name}</strong> actif
-          {billing.subscription.trialEndsAt
-            ? ` jusqu'au ${new Date(billing.subscription.trialEndsAt).toLocaleDateString("fr-FR")}`
-            : ""}
-          .{" "}
-          <Link href="/admin/subscription" className="underline">
-            Gérer l&apos;abonnement
-          </Link>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted">{getGreeting()},</p>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {user.establishment.name}
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-muted">
+            Pilotage de l&apos;établissement : utilisateurs, examens et
+            consommation de la plateforme.
+          </p>
         </div>
-      ) : null}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <p className="text-xs uppercase tracking-wider text-muted">
-              {stat.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{stat.value}</p>
-          </Card>
-        ))}
       </div>
 
-      {billing ? (
-        <Card className="mt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-semibold">Plan tarifaire</h2>
-              <p className="text-sm text-muted">{billing.plan.name}</p>
+      <AdminDashboardKpis kpis={stats.kpis} />
+
+      <div className="mt-6">
+        <AdminQuickActions />
+      </div>
+
+      <section id="statistiques" className="mt-8 scroll-mt-24">
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold">Statistiques</h2>
+          <p className="text-sm text-muted">
+            Activité des examens et tendances de l&apos;établissement
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <DashboardChartCard
+            className="lg:col-span-2"
+            title="Participations étudiantes"
+            subtitle="Connexions aux examens sur les 30 derniers jours"
+          >
+            <ParticipationTrendChart data={stats.participationTrend} />
+          </DashboardChartCard>
+
+          <DashboardChartCard
+            title="Taux de complétion"
+            subtitle="Copies finalisées sur l'établissement"
+          >
+            <CompletionGauge rate={stats.kpis.completionRate} />
+            <div className="mt-4 grid grid-cols-2 gap-3 text-center text-sm">
+              <div className="rounded-xl bg-surface-subtle px-3 py-2">
+                <p className="font-semibold text-accent">
+                  {stats.kpis.totalParticipations}
+                </p>
+                <p className="text-xs text-muted">Total</p>
+              </div>
+              <div className="rounded-xl bg-surface-subtle px-3 py-2">
+                <p className="font-semibold text-amber-400">
+                  {stats.kpis.incidentCount}
+                </p>
+                <p className="text-xs text-muted">Incidents</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="success">{billing.plan.name}</Badge>
-              <Link href="/admin/subscription">
-                <Button variant="secondary" size="sm">
-                  Voir l&apos;abonnement
-                </Button>
-              </Link>
-            </div>
+          </DashboardChartCard>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <DashboardChartCard
+            title="Examens créés"
+            subtitle="Évolution sur les 6 derniers mois"
+          >
+            <ExamsByMonthChart data={stats.examsByMonth} />
+          </DashboardChartCard>
+
+          <DashboardChartCard
+            title="Répartition par statut"
+            subtitle="Tous les examens de l'établissement"
+          >
+            <ExamStatusDonutChart data={stats.examStatusChart} />
+            <ChartLegend items={stats.examStatusChart} />
+          </DashboardChartCard>
+        </div>
+      </section>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <h3 className="font-semibold">Examens actifs</h3>
+          <p className="mt-1 text-sm text-muted">
+            Sessions publiées ou en cours
+          </p>
+          <div className="mt-4">
+            <AdminLiveExamsPanel exams={stats.liveExams} />
           </div>
-          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="text-muted">Professeurs</dt>
-              <dd className="font-medium">
-                {billing.consumption.teachers.current}
-                {billing.consumption.teachers.max != null
-                  ? ` / ${billing.consumption.teachers.max}`
-                  : " / Illimité"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted">Étudiants</dt>
-              <dd className="font-medium">
-                {billing.consumption.students.current}
-                {billing.consumption.students.max != null
-                  ? ` / ${billing.consumption.students.max}`
-                  : " / Illimité"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted">Examens ce mois</dt>
-              <dd className="font-medium">
-                {billing.consumption.examsThisMonth.current}
-                {billing.consumption.examsThisMonth.max != null
-                  ? ` / ${billing.consumption.examsThisMonth.max}`
-                  : " / Illimité"}
-              </dd>
-            </div>
-          </dl>
         </Card>
-      ) : null}
+
+        <Card className="lg:col-span-2">
+          <h3 className="font-semibold">Activité récente</h3>
+          <p className="mt-1 text-sm text-muted">
+            Dernières actions administratives
+          </p>
+          <div className="mt-4">
+            <AdminActivityPanel
+              logs={stats.recentLogs}
+              incidentCount={stats.kpis.incidentCount}
+            />
+          </div>
+        </Card>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Card>
+            <div className="mb-4">
+              <h3 className="font-semibold">Examens récents</h3>
+              <p className="text-sm text-muted">
+                Derniers examens modifiés dans l&apos;établissement
+              </p>
+            </div>
+            <AdminRecentExamsTable exams={stats.recentExams} />
+          </Card>
+        </div>
+
+        {billing ? (
+          <AdminBillingPanel
+            billing={{
+              planName: billing.plan.name,
+              isSimulated: billing.subscription.isSimulated,
+              trialEndsAt: billing.subscription.trialEndsAt,
+              consumption: billing.consumption,
+            }}
+          />
+        ) : (
+          <Card>
+            <h3 className="font-semibold">Abonnement</h3>
+            <p className="mt-2 text-sm text-muted">
+              Informations d&apos;abonnement indisponibles.
+            </p>
+            <Link
+              href="/admin/subscription"
+              className="mt-4 inline-block text-sm text-accent hover:underline"
+            >
+              Voir l&apos;abonnement
+            </Link>
+          </Card>
+        )}
+      </div>
     </DashboardShell>
   );
 }

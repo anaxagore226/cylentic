@@ -6,7 +6,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { SubmissionReview } from "@/components/teacher/submission-review";
 import { Button } from "@/components/ui/button";
 import { resultsService } from "@/lib/services/results.service";
-import { TEACHER_NAV } from "@/lib/teacher/nav";
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 export default async function ParticipationDetailPage({
   params,
@@ -35,7 +35,7 @@ export default async function ParticipationDetailPage({
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title={`Copie — ${data.student.name}`}
       userName={`${user!.firstName} ${user!.lastName}`}
       roleLabel={`Professeur — ${user!.establishment.name}`}

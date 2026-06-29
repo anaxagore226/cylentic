@@ -3,12 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ExamForm } from "@/components/teacher/exam-form";
-
-const TEACHER_NAV = [
-  { href: "/teacher/dashboard", label: "Tableau de bord" },
-  { href: "/teacher/exams", label: "Mes examens" },
-  { href: "/teacher/exams/new", label: "Créer un examen" },
-];
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 export default async function NewExamPage() {
   const session = await getSession();
@@ -22,7 +17,7 @@ export default async function NewExamPage() {
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title="Créer un examen"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Professeur — ${user.establishment.name}`}

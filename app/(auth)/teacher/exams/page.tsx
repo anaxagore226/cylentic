@@ -8,12 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { examService } from "@/lib/services/exam.service";
 import { DeleteExamButton } from "@/components/teacher/delete-exam-button";
-
-const TEACHER_NAV = [
-  { href: "/teacher/dashboard", label: "Tableau de bord" },
-  { href: "/teacher/exams", label: "Mes examens" },
-  { href: "/teacher/exams/new", label: "Créer un examen" },
-];
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 const statusLabels: Record<string, string> = {
   draft: "Brouillon",
@@ -37,7 +32,7 @@ export default async function TeacherExamsPage() {
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title="Mes examens"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Professeur — ${user.establishment.name}`}

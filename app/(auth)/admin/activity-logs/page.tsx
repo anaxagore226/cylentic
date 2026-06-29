@@ -1,7 +1,7 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_NAV, requireAdmin } from "@/lib/admin/context";
+import { ADMIN_NAV_GROUPS, requireAdmin } from "@/lib/admin/context";
 
 export default async function AdminActivityLogsPage() {
   const { user } = await requireAdmin();
@@ -17,7 +17,7 @@ export default async function AdminActivityLogsPage() {
 
   return (
     <DashboardShell
-      nav={ADMIN_NAV}
+      nav={ADMIN_NAV_GROUPS}
       title="Journal d'activité"
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Admin — ${user.establishment.name}`}

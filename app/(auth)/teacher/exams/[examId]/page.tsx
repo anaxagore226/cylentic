@@ -10,16 +10,11 @@ import {
   AccessCodeDisplay,
   PublishExamButton,
 } from "@/components/teacher/access-code-display";
-import { ExerciseCodeForm } from "@/components/teacher/exercise-code-form";
-import { ExerciseQcmForm } from "@/components/teacher/exercise-qcm-form";
+import { ExerciseComposer } from "@/components/teacher/exercise-composer";
+import { ExerciseList } from "@/components/teacher/exercise-list";
 import { DeleteExamButton } from "@/components/teacher/delete-exam-button";
 import { ExportResultsButtons } from "@/components/teacher/export-buttons";
-
-const TEACHER_NAV = [
-  { href: "/teacher/dashboard", label: "Tableau de bord" },
-  { href: "/teacher/exams", label: "Mes examens" },
-  { href: "/teacher/exams/new", label: "Créer un examen" },
-];
+import { TEACHER_NAV_GROUPS } from "@/lib/teacher/nav";
 
 export default async function ExamDetailPage({
   params,
@@ -48,10 +43,11 @@ export default async function ExamDetailPage({
   if (!exam) notFound();
 
   const canPublish = exam.status === "draft" && exam.exercises.length > 0;
+  const isDraft = exam.status === "draft";
 
   return (
     <DashboardShell
-      nav={TEACHER_NAV}
+      nav={TEACHER_NAV_GROUPS}
       title={exam.name}
       userName={`${user.firstName} ${user.lastName}`}
       roleLabel={`Professeur — ${user.establishment.name}`}
@@ -91,65 +87,71 @@ export default async function ExamDetailPage({
         <div className="mb-6">
           <PublishExamButton examId={exam.id} />
         </div>
-      ) : exam.status === "draft" ? (
+      ) : isDraft ? (
         <Card className="mb-6 border-amber-500/30 bg-amber-500/5 text-sm text-amber-300">
           Ajoutez au moins un exercice avant de publier.
         </Card>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="h-fit lg:col-span-1">
           <h2 className="font-semibold">Informations</h2>
-          <dl className="mt-4 space-y-2 text-sm">
-            <div className="flex justify-between">
+          <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
               <dt className="text-muted">Durée</dt>
-              <dd>{exam.durationMinutes} min</dd>
+              <dd className="font-medium">{exam.durationMinutes} min</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <dt className="text-muted">Délai retardataires</dt>
-              <dd>{exam.accessDelayMinutes} min</dd>
+              <dd className="font-medium">{exam.accessDelayMinutes} min</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <dt className="text-muted">Correction</dt>
-              <dd>{exam.correctionMode}</dd>
+              <dd className="font-medium">{exam.correctionMode}</dd>
             </div>
             <div>
               <dt className="text-muted">Classes</dt>
-              <dd className="mt-1">
+              <dd className="mt-1 font-medium">
                 {exam.examClasses.map((ec) => ec.class.name).join(", ") || "—"}
+              </dd>
+            </div>
+            <div className="border-t border-card-border pt-3">
+              <dt className="text-muted">Exercices</dt>
+              <dd className="mt-1 text-2xl font-semibold text-accent">
+                {exam.exercises.length}
               </dd>
             </div>
           </dl>
         </Card>
 
-        <Card>
-          <h2 className="font-semibold">
-            Exercices ({exam.exercises.length})
-          </h2>
-          {exam.status === "draft" ? (
-            <div className="mt-4 space-y-6">
-              <ExerciseCodeForm examId={exam.id} />
-              <ExerciseQcmForm examId={exam.id} />
-            </div>
-          ) : null}
-          {exam.exercises.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">
-              Aucun exercice — ajoutez-en un ci-dessus.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-card-border">
-              {exam.exercises.map((ex) => (
-                <li key={ex.id} className="py-2 first:pt-0">
-                  <span className="font-medium">{ex.title}</span>
-                  <span className="ml-2 text-xs text-muted">
-                    {ex.type} · {String(ex.points)} pts
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+        <Card className="lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="font-semibold">
+              Contenu de l&apos;examen
+            </h2>
+            <span className="text-sm text-muted">
+              {exam.exercises.length} exercice
+              {exam.exercises.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <ExerciseList
+            examId={exam.id}
+            exercises={exam.exercises}
+            editable={isDraft}
+            emptyHint={
+              isDraft
+                ? "Commencez par composer votre premier exercice ci-dessous."
+                : "Aucun exercice dans cet examen."
+            }
+          />
         </Card>
       </div>
+
+      {isDraft ? (
+        <div className="mt-6">
+          <ExerciseComposer examId={exam.id} />
+        </div>
+      ) : null}
     </DashboardShell>
   );
 }
